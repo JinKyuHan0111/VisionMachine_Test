@@ -1,0 +1,19 @@
+# Training Hyperparameters
+model: yolov8m.pt       # base model: n/s/m/l/x (n=fastest, x=most accurate)
+data: configs/dataset.yaml
+epochs: 100
+imgsz: 640
+batch: 16               # GPU 메모리에 따라 조정 (OOM시 줄이기)
+device: 0               # GPU 번호 (CPU 사용시 'cpu')
+workers: 8
+project: runs/train
+name: highway_detector
+exist_ok: true
+pretrained: true
+optimizer: AdamW
+lr0: 0.001
+weight_decay: 0.0005
+patience: 20            # Early stopping
+save_period: 10         # N 에폭마다 체크포인트 저장
+val: true
+plots: true

@@ -1,0 +1,16 @@
+# Highway CCTV - Accident & Wildfire Detection Dataset Config
+# YOLOv8 format
+
+path: ../data/datasets  # dataset root dir
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+nc: 5  # number of classes
+names:
+  0: accident       # 차량 사고
+  1: fire           # 화재/산불
+  2: smoke          # 연기
+  3: stopped_vehicle  # 갓길 정차 차량
+  4: debris         # 낙하물/장애물
