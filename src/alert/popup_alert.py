@@ -27,6 +27,13 @@ ALERT_CONFIG = {
         "bg": "#FFF0E0",
         "sound": True,
     },
+    "flame": {
+        "label": "화염 감지",
+        "level": "CRITICAL",
+        "color": "#FF4500",
+        "bg": "#FFF0E0",
+        "sound": True,
+    },
     "smoke": {
         "label": "연기 감지",
         "level": "WARNING",
@@ -207,15 +214,17 @@ class AlertWindow:
 
 
 def trigger_alert(class_name: str, confidence: float,
-                  location: str = "카메라 1", frame_path: str = None):
+                  location: str = "카메라 1", frame_path: str = None,
+                  use_db: bool = True):
     """
-    경고 팝업 트리거 (스레드 안전, 쿨다운 적용)
+    경고 팝업 트리거 (스레드 안전, 쿨다운 적용, DB 기록)
 
     Args:
-        class_name: 감지된 클래스명 (accident, fire, smoke 등)
+        class_name: 감지된 클래스명 (fire, flame, smoke 등)
         confidence: 신뢰도 (0.0 ~ 1.0)
         location: 감지 위치 (카메라 이름)
         frame_path: 캡처 프레임 경로 (옵션)
+        use_db: DB 기록 여부 (기본 True)
     """
     cfg = ALERT_CONFIG.get(class_name, {"level": "WARNING"})
     level = cfg["level"]
@@ -225,10 +234,24 @@ def trigger_alert(class_name: str, confidence: float,
         key = f"{class_name}_{location}"
         now = time.time()
         if key in _last_alert_time:
-            elapsed = now - _last_alert_time[key]
-            if elapsed < cooldown:
+            if now - _last_alert_time[key] < cooldown:
                 return  # 쿨다운 중
         _last_alert_time[key] = now
+
+    # DB 기록 (db_manager 통해 SQLite + ChromaDB 동시 저장)
+    if use_db:
+        try:
+            import sys
+            sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+            from src.database import db_manager
+            db_manager.record_detection(
+                class_name=class_name,
+                confidence=confidence,
+                source=location,
+                frame_path=frame_path,
+            )
+        except Exception as e:
+            print(f"[DB 기록 실패] {e}")
 
     # 별도 스레드에서 팝업 표시
     alert = AlertWindow(class_name, confidence, location, frame_path)

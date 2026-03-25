@@ -1,16 +1,14 @@
-# Highway CCTV - Accident & Wildfire Detection Dataset Config
+# Highway CCTV - Fire Detection Dataset Config (Phase 1)
 # YOLOv8 format
 
-path: ../data/datasets  # dataset root dir
-train: images/train
-val: images/val
-test: images/test
+path: c:/VisionMachine_Test/data/raw/fire_smoke
+train: train/images
+val: valid/images
+test: test/images
 
 # Classes
-nc: 5  # number of classes
+nc: 3
 names:
-  0: accident       # 차량 사고
-  1: fire           # 화재/산불
-  2: smoke          # 연기
-  3: stopped_vehicle  # 갓길 정차 차량
-  4: debris         # 낙하물/장애물
+  0: fire
+  1: flame
+  2: smoke

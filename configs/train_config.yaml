@@ -7,7 +7,7 @@ batch: 16               # GPU 메모리에 따라 조정 (OOM시 줄이기)
 device: 0               # GPU 번호 (CPU 사용시 'cpu')
 workers: 8
 project: runs/train
-name: highway_detector
+name: fire_detector
 exist_ok: true
 pretrained: true
 optimizer: AdamW

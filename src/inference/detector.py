@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CLASS_COLORS = {
     "accident":        (0,   0,   255),  # 빨강
     "fire":            (0,   69,  255),  # 주황
+    "flame":           (0,   69,  255),  # 주황
     "smoke":           (128, 128, 128),  # 회색
     "stopped_vehicle": (255, 165,  0),   # 파랑
     "debris":          (0,   165, 255),  # 연주황
@@ -108,6 +109,6 @@ class HighwayDetector:
         Returns:
             (is_dangerous, dangerous_detections)
         """
-        dangerous_classes = {"accident", "fire", "smoke", "debris"}
+        dangerous_classes = {"accident", "fire", "flame", "smoke", "debris"}
         dangerous = [d for d in detections if d["class"] in dangerous_classes]
         return len(dangerous) > 0, dangerous

@@ -219,3 +219,18 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,python
+
+### Project-specific ###
+# 데이터셋 (Roboflow에서 재다운로드)
+data/raw/
+data/captures/
+
+# 학습/평가 결과물
+runs/
+
+# 학습된 모델 파일 (용량 큼)
+models/*.pt
+*.pt
+
+# Claude Code 내부 파일
+.claude/
