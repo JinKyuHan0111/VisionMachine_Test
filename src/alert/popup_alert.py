@@ -21,14 +21,7 @@ ALERT_CONFIG = {
         "sound": True,
     },
     "fire": {
-        "label": "화재/산불",
-        "level": "CRITICAL",
-        "color": "#FF4500",
-        "bg": "#FFF0E0",
-        "sound": True,
-    },
-    "flame": {
-        "label": "화염 감지",
+        "label": "화재 감지",
         "level": "CRITICAL",
         "color": "#FF4500",
         "bg": "#FFF0E0",
@@ -252,6 +245,13 @@ def trigger_alert(class_name: str, confidence: float,
             )
         except Exception as e:
             print(f"[DB 기록 실패] {e}")
+
+    # 이메일 알림 발송
+    try:
+        from src.alert.email_notifier import send_alert as send_email
+        send_email(class_name, confidence, location, frame_path)
+    except Exception as e:
+        print(f"[이메일 알림 실패] {e}")
 
     # 별도 스레드에서 팝업 표시
     alert = AlertWindow(class_name, confidence, location, frame_path)

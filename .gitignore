@@ -234,3 +234,6 @@ models/*.pt
 
 # Claude Code 내부 파일
 .claude/
+
+# 이메일 설정 (비밀번호 포함)
+configs/email_config.py

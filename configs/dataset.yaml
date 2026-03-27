@@ -1,14 +1,13 @@
-# Highway CCTV - Fire Detection Dataset Config (Phase 1)
+# Highway CCTV - Fire Detection Dataset Config (merged: Roboflow x2 + D-Fire)
 # YOLOv8 format
 
-path: c:/VisionMachine_Test/data/raw/fire_smoke
+path: C:/VisionMachine_Test/data/raw/merged
 train: train/images
 val: valid/images
 test: test/images
 
-# Classes
-nc: 3
+# Classes (flame을 fire로 병합)
+nc: 2
 names:
   0: fire
-  1: flame
-  2: smoke
+  1: smoke

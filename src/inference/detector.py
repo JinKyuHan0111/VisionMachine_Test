@@ -12,12 +12,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # 클래스별 표시 색상 (BGR)
 CLASS_COLORS = {
-    "accident":        (0,   0,   255),  # 빨강
     "fire":            (0,   69,  255),  # 주황
-    "flame":           (0,   69,  255),  # 주황
     "smoke":           (128, 128, 128),  # 회색
-    "stopped_vehicle": (255, 165,  0),   # 파랑
-    "debris":          (0,   165, 255),  # 연주황
 }
 
 DEFAULT_CONF = 0.45  # 기본 신뢰도 임계값
@@ -109,6 +105,6 @@ class HighwayDetector:
         Returns:
             (is_dangerous, dangerous_detections)
         """
-        dangerous_classes = {"accident", "fire", "flame", "smoke", "debris"}
+        dangerous_classes = {"fire", "smoke"}
         dangerous = [d for d in detections if d["class"] in dangerous_classes]
         return len(dangerous) > 0, dangerous
