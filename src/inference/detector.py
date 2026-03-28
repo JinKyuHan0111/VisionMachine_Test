@@ -16,7 +16,7 @@ CLASS_COLORS = {
     "smoke":           (128, 128, 128),  # 회색
 }
 
-DEFAULT_CONF = 0.45  # 기본 신뢰도 임계값
+DEFAULT_CONF = 0.25  # 기본 신뢰도 임계값 (Recall 우선)
 
 
 class HighwayDetector:
