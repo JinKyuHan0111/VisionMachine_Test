@@ -1,19 +1,19 @@
 # Training Hyperparameters
-model: models/fire_detector_best.pt  # 기존 모델에서 파인튜닝
+model: yolov8m.pt        # 1클래스로 통합, 처음부터 학습
 data: configs/dataset.yaml
-epochs: 50
+epochs: 100
 imgsz: 640
 batch: 16               # GPU 메모리에 따라 조정 (OOM시 줄이기)
 device: 0               # GPU 번호 (CPU 사용시 'cpu')
 workers: 8
 project: runs/train
-name: fire_detector_v2
+name: fire_detector_v3
 exist_ok: true
 pretrained: true
 optimizer: AdamW
-lr0: 0.0001             # 파인튜닝은 학습률 낮게
+lr0: 0.001
 weight_decay: 0.0005
-patience: 15            # Early stopping
+patience: 20            # Early stopping
 save_period: 10         # N 에폭마다 체크포인트 저장
 val: true
 plots: true

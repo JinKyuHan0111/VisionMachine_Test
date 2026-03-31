@@ -6,8 +6,7 @@ train: train/images
 val: valid/images
 test: test/images
 
-# Classes (flame을 fire로 병합)
-nc: 2
+# Classes (fire + smoke 통합)
+nc: 1
 names:
   0: fire
-  1: smoke

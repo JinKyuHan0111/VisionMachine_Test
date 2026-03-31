@@ -27,13 +27,6 @@ ALERT_CONFIG = {
         "bg": "#FFF0E0",
         "sound": True,
     },
-    "smoke": {
-        "label": "연기 감지",
-        "level": "WARNING",
-        "color": "#FF8C00",
-        "bg": "#FFFAE0",
-        "sound": False,
-    },
     "stopped_vehicle": {
         "label": "갓길 정차",
         "level": "INFO",

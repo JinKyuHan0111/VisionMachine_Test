@@ -12,8 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # 클래스별 표시 색상 (BGR)
 CLASS_COLORS = {
-    "fire":            (0,   69,  255),  # 주황
-    "smoke":           (128, 128, 128),  # 회색
+    "fire": (0, 69, 255),  # 주황
 }
 
 DEFAULT_CONF = 0.25  # 기본 신뢰도 임계값 (Recall 우선)
@@ -64,8 +63,12 @@ class HighwayDetector:
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0])
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cls_name = self.class_names[cls_id]
+                # smoke는 fire로 통합 표시
+                if cls_name == "smoke":
+                    cls_name = "fire"
                 detections.append({
-                    "class": self.class_names[cls_id],
+                    "class": cls_name,
                     "confidence": conf,
                     "bbox": [x1, y1, x2, y2],
                 })
@@ -105,6 +108,6 @@ class HighwayDetector:
         Returns:
             (is_dangerous, dangerous_detections)
         """
-        dangerous_classes = {"fire", "smoke"}
+        dangerous_classes = {"fire"}
         dangerous = [d for d in detections if d["class"] in dangerous_classes]
         return len(dangerous) > 0, dangerous
