@@ -46,15 +46,15 @@ def extract_dfire():
         return extract_dir
 
     print(f"[압축 해제] {zip_path.name} ...")
+    extract_root = extract_dir.resolve()
     with zipfile.ZipFile(zip_path) as zf:
         members = zf.infolist()
         for i, member in enumerate(members):
-            # 경로 조작 방지: ../ 포함된 항목 건너뜀
-            member_path = Path(member.filename)
-            if ".." in member_path.parts:
-                print(f"  [보안] 건너뜀: {member.filename}")
+            # ZIP Slip 방지: 정규화 후 추출 디렉토리 밖 경로 차단
+            target = (extract_dir / member.filename).resolve()
+            if not str(target).startswith(str(extract_root)):
+                print(f"  [보안] 경로 이탈 차단: {member.filename}")
                 continue
-            target = extract_dir / member_path
             if member.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
             else:

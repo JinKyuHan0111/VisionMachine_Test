@@ -43,7 +43,6 @@
   .stat-card .label { font-size: 0.78rem; color: #888; margin-bottom: 8px; }
   .stat-card .value { font-size: 2rem; font-weight: 700; }
   .stat-card.fire .value  { color: #ff6b35; }
-  .stat-card.smoke .value { color: #aaa; }
   .stat-card.today .value { color: #64b5f6; }
   .stat-card.total .value { color: #81c784; }
 
@@ -82,7 +81,6 @@
     border-left: 3px solid transparent;
   }
   .detection-item.fire  { border-color: #ff6b35; }
-  .detection-item.smoke { border-color: #888; }
   .badge {
     font-size: 0.72rem;
     font-weight: 600;
@@ -92,7 +90,6 @@
     text-align: center;
   }
   .badge.fire  { background: #ff6b3522; color: #ff6b35; }
-  .badge.smoke { background: #88888822; color: #bbb; }
   .det-info { flex: 1; }
   .det-source { font-size: 0.82rem; color: #ccc; }
   .det-time   { font-size: 0.72rem; color: #666; }
@@ -142,7 +139,6 @@
     transition: all 0.15s;
   }
   .filter-btn.active { background: #ff6b3522; border-color: #ff6b35; color: #ff6b35; }
-  .filter-btn.active.smoke { background: #88888822; border-color: #888; color: #bbb; }
 
   /* 이미지 모달 */
   .modal {
@@ -169,6 +165,12 @@
   <div class="live-dot"></div>
   <h1>화재 감지 대시보드</h1>
   <span style="margin-left:auto; font-size:0.8rem; color:#555;" id="last-updated"></span>
+  {% if user.is_admin %}
+  <a href="/admin/users" style="font-size:0.8rem; color:#888; text-decoration:none; margin-left:16px;">사용자 관리</a>
+  {% endif %}
+  <a href="/logout" style="font-size:0.8rem; color:#888; text-decoration:none; margin-left:16px;">
+    로그아웃 ({{ user.username }} · {{ role_labels[user.role] }})
+  </a>
 </header>
 
 <div class="container">
@@ -187,10 +189,6 @@
       <div class="label">오늘 화재</div>
       <div class="value" id="stat-fire">-</div>
     </div>
-    <div class="stat-card smoke">
-      <div class="label">오늘 연기</div>
-      <div class="value" id="stat-smoke">-</div>
-    </div>
   </div>
 
   <div class="main-grid">
@@ -201,7 +199,6 @@
       <div class="filter-row">
         <button class="filter-btn active" onclick="setFilter('all', this)">전체</button>
         <button class="filter-btn" onclick="setFilter('fire', this)">화재</button>
-        <button class="filter-btn smoke" onclick="setFilter('smoke', this)">연기</button>
       </div>
       <div class="detection-list" id="detection-list">
         <div class="empty">데이터 로딩 중...</div>
@@ -251,7 +248,6 @@ async function loadStats() {
   document.getElementById('stat-today').textContent = data.today ?? 0;
   document.getElementById('stat-total').textContent = data.total ?? 0;
   document.getElementById('stat-fire').textContent  = data.by_class?.fire  ?? 0;
-  document.getElementById('stat-smoke').textContent = data.by_class?.smoke ?? 0;
 
   // 시간대별 차트
   const chart = document.getElementById('hourly-chart');

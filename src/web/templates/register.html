@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입 - 화재 감지 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .box {
+    background: #1a1d27;
+    border: 1px solid #2a2d3a;
+    border-radius: 12px;
+    padding: 40px 36px;
+    width: 380px;
+  }
+  h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .subtitle { font-size: 0.78rem; color: #666; text-align: center; margin-bottom: 28px; }
+  label { display: block; font-size: 0.78rem; color: #888; margin-bottom: 6px; }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    background: #12141c;
+    border: 1px solid #2a2d3a;
+    border-radius: 7px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    outline: none;
+  }
+  input:focus { border-color: #ff6b35; }
+  button {
+    width: 100%;
+    padding: 11px;
+    background: #ff6b35;
+    border: none;
+    border-radius: 7px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #e85c28; }
+  .error {
+    background: #ff6b3522;
+    border: 1px solid #ff6b35;
+    border-radius: 7px;
+    color: #ff6b35;
+    font-size: 0.82rem;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .notice {
+    background: #64b5f622;
+    border: 1px solid #64b5f6;
+    border-radius: 7px;
+    color: #64b5f6;
+    font-size: 0.8rem;
+    padding: 10px 12px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .footer-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.82rem;
+    color: #666;
+  }
+  .footer-link a { color: #64b5f6; text-decoration: none; }
+  .footer-link a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>회원가입</h1>
+  <p class="subtitle">가입 후 관리자 승인이 필요합니다</p>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <div class="notice">
+    가입 완료 후 <strong>일반</strong> 등급으로 등록됩니다.<br>
+    관리자가 <strong>회원</strong> 등급으로 승인하면 대시보드를 이용하실 수 있습니다.
+  </div>
+
+  <form method="post" action="/register">
+    <label for="username">아이디</label>
+    <input type="text" id="username" name="username" required autofocus
+           pattern="[a-zA-Z0-9_\-]+" title="영문, 숫자, _, - 만 사용 가능">
+
+    <label for="password">비밀번호</label>
+    <input type="password" id="password" name="password" required minlength="6">
+
+    <label for="email">이메일</label>
+    <input type="email" id="email" name="email" required>
+
+    <button type="submit">가입하기</button>
+  </form>
+
+  <div class="footer-link">
+    이미 계정이 있으신가요? <a href="/login">로그인</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사용자 관리 - 화재 감지 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; }
+  header {
+    background: #1a1d27;
+    padding: 14px 24px;
+    border-bottom: 1px solid #2a2d3a;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 1rem; font-weight: 600; }
+  header a { color: #888; font-size: 0.82rem; text-decoration: none; margin-left: auto; }
+  header a:hover { color: #e0e0e0; }
+  .container { max-width: 1000px; margin: 32px auto; padding: 0 24px; }
+  h2 { font-size: 0.88rem; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+  .panel {
+    background: #1a1d27;
+    border: 1px solid #2a2d3a;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  label { display: block; font-size: 0.78rem; color: #888; margin-bottom: 5px; }
+  input, select {
+    width: 100%;
+    padding: 9px 11px;
+    background: #12141c;
+    border: 1px solid #2a2d3a;
+    border-radius: 7px;
+    color: #e0e0e0;
+    font-size: 0.88rem;
+    margin-bottom: 14px;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: #ff6b35; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .hint { font-size: 0.72rem; color: #555; margin-top: -10px; margin-bottom: 14px; }
+  .btn { padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: #ff6b35; color: #fff; }
+  .btn-primary:hover { background: #e85c28; }
+  .btn-approve { background: #81c78422; border: 1px solid #81c784; color: #81c784; }
+  .btn-approve:hover { background: #81c78444; }
+  .btn-danger { background: transparent; border: 1px solid #c0392b; color: #e74c3c; }
+  .btn-danger:hover { background: #c0392b22; }
+  .btn-small { padding: 5px 12px; background: transparent; border: 1px solid #2a2d3a; color: #888; }
+  .btn-small:hover { border-color: #64b5f6; color: #64b5f6; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 10px 12px; color: #888; font-weight: 500; border-bottom: 1px solid #2a2d3a; }
+  td { padding: 10px 12px; border-bottom: 1px solid #12141c; vertical-align: middle; }
+  tr:hover td { background: #12141c22; }
+  .badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .badge-admin   { background: #ff6b3522; color: #ff6b35; }
+  .badge-member  { background: #64b5f622; color: #64b5f6; }
+  .badge-general { background: #88888822; color: #aaa; }
+  .cam-list { color: #aaa; font-size: 0.78rem; }
+  .cam-all  { color: #81c784; font-size: 0.78rem; }
+  .message {
+    background: #81c78422;
+    border: 1px solid #81c784;
+    border-radius: 7px;
+    color: #81c784;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+  }
+  .pending-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff6b35;
+    color: #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+  .approve-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .approve-form input { margin: 0; width: 160px; }
+  .approve-form select { margin: 0; width: 90px; }
+  .inline-form { display: flex; gap: 6px; align-items: center; }
+  .inline-form input { margin: 0; flex: 1; min-width: 120px; }
+  .inline-form select { margin: 0; width: 90px; }
+  .empty { color: #555; font-size: 0.85rem; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>사용자 관리</h1>
+  <a href="/">← 대시보드로 돌아가기</a>
+</header>
+
+<div class="container">
+  {% if message %}
+  <div class="message">{{ message }}</div>
+  {% endif %}
+
+  <!-- 승인 대기 -->
+  <div class="panel">
+    <h2>
+      승인 대기
+      {% if pending %}
+      <span class="pending-count">{{ pending | length }}</span>
+      {% endif %}
+    </h2>
+    {% if pending %}
+    <table>
+      <thead>
+        <tr>
+          <th>아이디</th>
+          <th>이메일</th>
+          <th>가입일</th>
+          <th>승인 (등급 + 카메라)</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in pending %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td style="color:#888; font-size:0.8rem;">{{ u.email or '-' }}</td>
+          <td style="color:#666; font-size:0.78rem;">{{ u.created_at[:10] }}</td>
+          <td>
+            <form method="post" action="/admin/users/approve" class="approve-form">
+              <input type="hidden" name="username" value="{{ u.username }}">
+              <select name="role">
+                <option value="member">회원</option>
+                <option value="admin">관리자</option>
+              </select>
+              <input type="text" name="cameras" placeholder="카메라 1, 카메라 2 (비워두면 전체)">
+              <button type="submit" class="btn btn-approve">승인</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="/admin/users/delete"
+                  onsubmit="return confirm('{{ u.username }} 계정을 삭제하시겠습니까?')">
+              <input type="hidden" name="username" value="{{ u.username }}">
+              <button type="submit" class="btn btn-danger">거절</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">승인 대기 중인 사용자가 없습니다.</div>
+    {% endif %}
+  </div>
+
+  <!-- 활성 사용자 목록 -->
+  <div class="panel">
+    <h2>활성 사용자</h2>
+    {% if users %}
+    <table>
+      <thead>
+        <tr>
+          <th>아이디</th>
+          <th>이메일</th>
+          <th>등급</th>
+          <th>담당 카메라</th>
+          <th>관리</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td style="color:#888; font-size:0.8rem;">{{ u.email or '-' }}</td>
+          <td>
+            <span class="badge badge-{{ u.role }}">
+              {% if u.role == 'admin' %}관리자
+              {% elif u.role == 'member' %}회원
+              {% else %}일반{% endif %}
+            </span>
+          </td>
+          <td>
+            {% if u.cameras is none %}
+            <span class="cam-all">전체</span>
+            {% else %}
+            <span class="cam-list">{{ u.cameras | join(", ") }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <!-- 등급 변경 -->
+              <form method="post" action="/admin/users/role" class="inline-form"
+                    {% if u.username == admin.username %}
+                    onsubmit="return confirm('자신의 등급을 변경하시겠습니까?')"
+                    {% endif %}>
+                <input type="hidden" name="username" value="{{ u.username }}">
+                <select name="role">
+                  <option value="member" {% if u.role == 'member' %}selected{% endif %}>회원</option>
+                  <option value="admin"  {% if u.role == 'admin'  %}selected{% endif %}>관리자</option>
+                </select>
+                <button type="submit" class="btn btn-small">등급 변경</button>
+              </form>
+              <!-- 카메라 변경 -->
+              <form method="post" action="/admin/users/cameras" class="inline-form">
+                <input type="hidden" name="username" value="{{ u.username }}">
+                <input type="text" name="cameras"
+                       placeholder="카메라 1, ..."
+                       value="{{ u.cameras | join(', ') if u.cameras else '' }}">
+                <button type="submit" class="btn btn-small">카메라 변경</button>
+              </form>
+              <!-- 삭제 -->
+              {% if u.username != admin.username %}
+              <form method="post" action="/admin/users/delete"
+                    onsubmit="return confirm('{{ u.username }} 계정을 삭제하시겠습니까?')">
+                <input type="hidden" name="username" value="{{ u.username }}">
+                <button type="submit" class="btn btn-danger">삭제</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">활성 사용자가 없습니다.</div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

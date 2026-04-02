@@ -45,7 +45,7 @@ class HighwayDetector:
         self.model = YOLO(str(self.model_path))
         self.class_names = self.model.names
         print(f"모델 로드 완료: {self.model_path.name}")
-        print(f"  클래스: {list(self.class_names.values())}")
+        print(f"  클래스: ['fire']  (smoke → fire 통합)")
 
     def detect_image(self, image: np.ndarray) -> list:
         """

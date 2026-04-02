@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이메일 인증 - 화재 감지 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .box {
+    background: #1a1d27;
+    border: 1px solid #2a2d3a;
+    border-radius: 12px;
+    padding: 48px 40px;
+    width: 440px;
+    text-align: center;
+  }
+  .icon { font-size: 3rem; margin-bottom: 20px; }
+  h1 { font-size: 1.2rem; font-weight: 600; margin-bottom: 12px; }
+  p  { color: #888; font-size: 0.88rem; line-height: 1.7; margin-bottom: 10px; }
+  .email-badge {
+    display: inline-block;
+    background: #64b5f622;
+    color: #64b5f6;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 8px 0 20px;
+  }
+  .notice {
+    background: #12141c;
+    border: 1px solid #2a2d3a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.82rem;
+    color: #aaa;
+    text-align: left;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .success-msg {
+    background: #81c78422;
+    border: 1px solid #81c784;
+    border-radius: 8px;
+    color: #81c784;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+  .btn-resend {
+    display: inline-block;
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid #2a2d3a;
+    border-radius: 7px;
+    color: #888;
+    font-size: 0.88rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-resend:hover { border-color: #64b5f6; color: #64b5f6; }
+  a.logout {
+    display: block;
+    margin-top: 20px;
+    color: #555;
+    font-size: 0.82rem;
+    text-decoration: none;
+  }
+  a.logout:hover { color: #888; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="icon">✉️</div>
+  <h1>이메일 인증이 필요합니다</h1>
+  <div class="email-badge">{{ user.email or user.username }}</div>
+
+  {% if resent %}
+  <div class="success-msg">인증 이메일을 다시 발송했습니다. 메일함을 확인해 주세요.</div>
+  {% else %}
+  <p>가입하신 이메일 주소로 인증 링크를 발송했습니다.<br>링크를 클릭하면 인증이 완료됩니다.</p>
+  {% endif %}
+
+  <div class="notice">
+    • 메일이 도착하지 않은 경우 스팸함을 확인해 주세요.<br>
+    • 인증 링크는 <strong style="color:#e0e0e0;">24시간</strong> 동안 유효합니다.<br>
+    • 이메일 인증 후 관리자 승인이 추가로 필요합니다.
+  </div>
+
+  <form method="post" action="/verify-pending/resend">
+    <button type="submit" class="btn-resend">인증 이메일 재발송</button>
+  </form>
+
+  <a href="/logout" class="logout">로그아웃</a>
+</div>
+</body>
+</html>
