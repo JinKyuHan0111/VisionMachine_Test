@@ -62,14 +62,15 @@
     margin-top: 1px;
   }
   .step-text { font-size: 0.83rem; color: #aaa; line-height: 1.5; }
-  a.logout {
+  .logout {
     display: inline-block;
     margin-top: 24px;
     color: #555;
     font-size: 0.82rem;
     text-decoration: none;
   }
-  a.logout:hover { color: #888; }
+  .logout:hover { color: #888; }
+  button.logout { background:none; border:none; cursor:pointer; font-family:inherit; padding:0; }
 </style>
 </head>
 <body>
@@ -94,7 +95,7 @@
     </div>
   </div>
 
-  <a href="/logout" class="logout">로그아웃</a>
+  <form method="post" action="/logout"><button type="submit" class="logout">로그아웃</button></form>
 </div>
 </body>
 </html>

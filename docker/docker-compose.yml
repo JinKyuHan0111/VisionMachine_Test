@@ -1,0 +1,80 @@
+# 화재 감지 웹 대시보드 운영 배포
+# 실행:  cd docker && docker compose up -d --build
+# 이 폴더의 .env 를 사용함 (cp .env.example .env)
+#   인터넷 ──443/80──▶ caddy (자동 HTTPS) ──내부망──▶ app:8000
+# app 컨테이너는 호스트 포트를 열지 않는다 (외부에서 직접 접근 불가).
+
+services:
+  app:
+    build:
+      context: ..                  # 빌드 컨텍스트 = 프로젝트 루트
+      dockerfile: docker/Dockerfile
+    image: visionmachine-web:latest
+    env_file: .env
+    environment:
+      APP_ENV: production
+      # 이 대역(아래 internal 네트워크)에서 온 X-Forwarded-For 만 신뢰
+      FORWARDED_ALLOW_IPS: 172.28.0.0/24
+    volumes:
+      - app-data:/app/data
+    expose:
+      - "8000"
+    networks:
+      - internal
+    read_only: true            # 루트 파일시스템 읽기 전용 (data 볼륨만 쓰기 가능)
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN 을 .env 에 설정하세요}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data        # 인증서 보관 — 지우면 재발급(발급 횟수 제한 주의)
+      - caddy-config:/config
+    networks:
+      - internal
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:

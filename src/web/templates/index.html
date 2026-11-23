@@ -165,12 +165,14 @@
   <div class="live-dot"></div>
   <h1>화재 감지 대시보드</h1>
   <span style="margin-left:auto; font-size:0.8rem; color:#555;" id="last-updated"></span>
-  {% if user.is_admin %}
+  {% if user.role == 'admin' %}
   <a href="/admin/users" style="font-size:0.8rem; color:#888; text-decoration:none; margin-left:16px;">사용자 관리</a>
   {% endif %}
-  <a href="/logout" style="font-size:0.8rem; color:#888; text-decoration:none; margin-left:16px;">
-    로그아웃 ({{ user.username }} · {{ role_labels[user.role] }})
-  </a>
+  <form method="post" action="/logout" style="margin:0 0 0 16px;">
+    <button type="submit" style="font-size:0.8rem; color:#888; background:none; border:none; cursor:pointer; padding:0; font-family:inherit;">
+      로그아웃 ({{ user.username }} · {{ role_labels[user.role] }})
+    </button>
+  </form>
 </header>
 
 <div class="container">
@@ -234,6 +236,13 @@
 <script>
 let currentFilter = 'all';
 
+// innerHTML 에 넣는 서버 데이터는 반드시 이스케이프 (XSS 방지)
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"'`]/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;'
+  }[ch]));
+}
+
 function setFilter(filter, btn) {
   currentFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -259,7 +268,7 @@ async function loadStats() {
   chart.innerHTML = data.hourly.map(h => `
     <div class="bar-wrap">
       <div class="bar" style="height:${Math.max(h.count / max * 100, 2)}%"></div>
-      <div class="bar-label">${h.hour}시</div>
+      <div class="bar-label">${esc(h.hour)}시</div>
     </div>
   `).join('');
 }
@@ -267,7 +276,7 @@ async function loadStats() {
 async function loadDetections() {
   const url = currentFilter === 'all'
     ? '/api/detections?limit=30'
-    : `/api/detections?limit=30&class_name=${currentFilter}`;
+    : `/api/detections?limit=30&class_name=${encodeURIComponent(currentFilter)}`;
   const res = await fetch(url);
   const data = await res.json();
 
@@ -280,13 +289,13 @@ async function loadDetections() {
     const t = d.timestamp ? d.timestamp.replace('T', ' ').slice(0, 19) : '';
     const conf = d.confidence ? (d.confidence * 100).toFixed(1) + '%' : '';
     return `
-      <div class="detection-item ${d.class_name}">
-        <span class="badge ${d.class_name}">${d.class_name}</span>
+      <div class="detection-item ${esc(d.class_name)}">
+        <span class="badge ${esc(d.class_name)}">${esc(d.class_name)}</span>
         <div class="det-info">
-          <div class="det-source">${d.source || '알 수 없음'}</div>
-          <div class="det-time">${t}</div>
+          <div class="det-source">${esc(d.source || '알 수 없음')}</div>
+          <div class="det-time">${esc(t)}</div>
         </div>
-        <div class="det-conf">${conf}</div>
+        <div class="det-conf">${esc(conf)}</div>
       </div>
     `;
   }).join('');
@@ -303,8 +312,8 @@ async function loadCaptures() {
   }
   grid.innerHTML = data.map(c => `
     <div class="capture-item">
-      <img src="${c.url}" loading="lazy" onclick="openModal('${c.url}')" alt="${c.filename}">
-      <div class="cap-name">${c.filename}</div>
+      <img src="${esc(c.url)}" loading="lazy" data-url="${esc(c.url)}" onclick="openModal(this.dataset.url)" alt="${esc(c.filename)}">
+      <div class="cap-name">${esc(c.filename)}</div>
     </div>
   `).join('');
 }
