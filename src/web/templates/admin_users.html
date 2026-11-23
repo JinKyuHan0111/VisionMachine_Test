@@ -147,7 +147,8 @@
           </td>
           <td>
             <form method="post" action="/admin/users/delete"
-                  onsubmit="return confirm('{{ u.username }} 계정을 삭제하시겠습니까?')">
+                  data-username="{{ u.username }}"
+                  onsubmit="return confirm(this.dataset.username + ' 계정을 삭제하시겠습니까?')">
               <input type="hidden" name="username" value="{{ u.username }}">
               <button type="submit" class="btn btn-danger">거절</button>
             </form>
@@ -219,7 +220,8 @@
               <!-- 삭제 -->
               {% if u.username != admin.username %}
               <form method="post" action="/admin/users/delete"
-                    onsubmit="return confirm('{{ u.username }} 계정을 삭제하시겠습니까?')">
+                    data-username="{{ u.username }}"
+                  onsubmit="return confirm(this.dataset.username + ' 계정을 삭제하시겠습니까?')">
                 <input type="hidden" name="username" value="{{ u.username }}">
                 <button type="submit" class="btn btn-danger">삭제</button>
               </form>

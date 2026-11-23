@@ -1,0 +1,34 @@
+# BuildKit 은 Dockerfile 옆의 <Dockerfile이름>.dockerignore 를 사용함
+# 경로는 빌드 컨텍스트(프로젝트 루트) 기준
+
+# 비밀값 — 절대 이미지에 넣지 않음
+**/.env
+**/.env.*
+configs/email_config.py
+*.pem
+*.key
+
+# 데이터 / 모델 / 결과물 (용량 + 개인정보)
+data/
+models/
+runs/
+*.pt
+*.db
+*.sqlite3
+
+# 개발 환경
+.git/
+.gitignore
+.claude/
+.vscode/
+.idea/
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 배포 설정(.env 포함) 자체는 이미지에 불필요
+docker/
+*.md

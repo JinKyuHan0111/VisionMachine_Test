@@ -1,0 +1,11 @@
+# 웹 대시보드 전용 의존성 (Docker 이미지용)
+# torch/ultralytics 등 추론 의존성은 포함하지 않음 → 이미지 경량화 + 공격 표면 축소
+# 버전 고정: 재현 가능한 빌드 + 의도치 않은 업데이트 방지. 정기적으로 pip-audit 로 점검할 것.
+fastapi==0.165.0
+starlette==1.10.0
+uvicorn==0.54.0
+jinja2==3.1.6
+python-multipart==0.0.34
+itsdangerous==2.2.0
+bcrypt==5.0.0
+python-dotenv==1.2.4

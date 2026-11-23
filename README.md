@@ -49,8 +49,8 @@ EMAIL_RECIPIENT=받을이메일@gmail.com
 DASHBOARD_USER=admin
 DASHBOARD_PASSWORD=변경하세요
 
-# 세션 서명 키 (랜덤 문자열로 변경 권장)
-SESSION_SECRET_KEY=change-this-to-a-random-secret-key
+# 세션 서명 키 (python -c "import secrets; print(secrets.token_urlsafe(48))")
+SESSION_SECRET_KEY=
 
 # 이메일 인증 링크에 사용될 서버 주소
 APP_BASE_URL=http://localhost:8000
@@ -97,9 +97,12 @@ python src/inference/multi_monitor.py \
 
 ### 6. 웹 대시보드
 ```bash
+pip install -r requirements-web.txt
 uvicorn src.web.app:app --reload --port 8000
 ```
 브라우저에서 `http://localhost:8000` 접속
+
+> 원격 서버 배포(Docker + HTTPS)는 [DEPLOY.md](DEPLOY.md)를 참고하세요.
 
 #### 계정 등급 체계
 

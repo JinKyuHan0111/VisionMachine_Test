@@ -68,14 +68,15 @@
     text-decoration: none;
   }
   .btn-resend:hover { border-color: #64b5f6; color: #64b5f6; }
-  a.logout {
+  .logout {
     display: block;
     margin-top: 20px;
     color: #555;
     font-size: 0.82rem;
     text-decoration: none;
   }
-  a.logout:hover { color: #888; }
+  .logout:hover { color: #888; }
+  button.logout { background:none; border:none; cursor:pointer; font-family:inherit; padding:0; }
 </style>
 </head>
 <body>
@@ -100,7 +101,7 @@
     <button type="submit" class="btn-resend">인증 이메일 재발송</button>
   </form>
 
-  <a href="/logout" class="logout">로그아웃</a>
+  <form method="post" action="/logout"><button type="submit" class="logout">로그아웃</button></form>
 </div>
 </body>
 </html>

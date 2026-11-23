@@ -1,0 +1,28 @@
+{
+	# 관리 API 비활성화 (컨테이너 내부 2019 포트)
+	admin off
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+		-Via
+	}
+
+	# 폼 입력만 받으므로 요청 본문 크기 제한
+	request_body {
+		max_size 1MB
+	}
+
+	# Caddy 는 trusted_proxies 미설정 시 클라이언트가 보낸 X-Forwarded-For 를 무시하고
+	# 실제 접속 IP 로 새로 설정한다 → 앱의 IP 기반 요청 제한을 우회할 수 없음
+	reverse_proxy app:8000
+
+	log {
+		output stdout
+		format console
+	}
+}
