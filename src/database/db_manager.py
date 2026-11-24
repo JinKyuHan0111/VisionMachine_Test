@@ -3,7 +3,17 @@ DB Manager - SQLite + ChromaDB 통합 인터페이스
 감지 이벤트 저장 시 두 DB에 동시 기록
 """
 
-from src.database import sqlite_db, vector_db
+import os
+
+from src.database import sqlite_db
+
+# ChromaDB 는 선택 사항: 미설치이거나 VECTOR_DB=off 이면 SQLite 만 사용 (감지 기록은 항상 남김)
+vector_db = None
+if os.getenv("VECTOR_DB", "on").strip().lower() not in ("0", "off", "false", "no"):
+    try:
+        from src.database import vector_db
+    except ImportError as e:
+        print(f"[DB Manager] ChromaDB 사용 안 함 ({e})")
 
 # 클래스별 위험 등급 및 경고 메시지
 SEVERITY_MAP = {
@@ -16,7 +26,8 @@ SEVERITY_MAP = {
 def initialize():
     """SQLite 테이블 생성 + ChromaDB 컬렉션 초기화"""
     sqlite_db.init_db()
-    vector_db.get_stats()
+    if vector_db is not None:
+        vector_db.get_stats()
     print("[DB Manager] 초기화 완료")
 
 
@@ -30,8 +41,13 @@ def record_detection(class_name: str, confidence: float,
     """
     severity, message = SEVERITY_MAP.get(class_name, ("INFO", f"{class_name} 감지"))
 
-    # 1. 중복 체크 (ChromaDB 추가 전에 먼저 확인)
-    is_dup = vector_db.is_duplicate_alert(class_name, source or "unknown", window_seconds=30)
+    # 1. 중복 체크 (ChromaDB 추가 전에 먼저 확인). ChromaDB 가 없으면 popup_alert 의 쿨다운에 맡김
+    is_dup = False
+    if vector_db is not None:
+        try:
+            is_dup = vector_db.is_duplicate_alert(class_name, source or "unknown", window_seconds=30)
+        except Exception as e:
+            print(f"[ChromaDB] 중복 체크 실패 (무시): {e}")
     should_alert = not is_dup
 
     # 2. SQLite 저장
@@ -44,13 +60,17 @@ def record_detection(class_name: str, confidence: float,
         session_id=session_id,
     )
 
-    # 3. ChromaDB 저장
-    vector_db.add_detection_event(
-        detection_id=detection_id,
-        class_name=class_name,
-        confidence=confidence,
-        source=source,
-    )
+    # 3. ChromaDB 저장 (실패해도 SQLite 기록은 유지)
+    if vector_db is not None:
+        try:
+            vector_db.add_detection_event(
+                detection_id=detection_id,
+                class_name=class_name,
+                confidence=confidence,
+                source=source,
+            )
+        except Exception as e:
+            print(f"[ChromaDB] 저장 실패 (무시): {e}")
 
     if should_alert:
         sqlite_db.insert_alert(
@@ -65,6 +85,8 @@ def record_detection(class_name: str, confidence: float,
 
 def search_similar_events(query: str, n_results: int = 5, class_name: str = None):
     """자연어로 유사 사례 검색"""
+    if vector_db is None:
+        return []
     return vector_db.search_similar(query, n_results=n_results, class_name=class_name)
 
 
