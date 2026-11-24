@@ -3,12 +3,23 @@
 위험 상황 감지 시 화면에 팝업창 표시
 """
 
-import tkinter as tk
-from tkinter import ttk
+from __future__ import annotations
+
+import os
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
+
+# 화면이 없는 환경(Docker 등)에서는 tkinter 가 없거나 쓸 수 없다 → 팝업만 끄고 나머지(DB/이메일)는 동작
+try:
+    import tkinter as tk
+    from tkinter import ttk
+except ImportError:
+    tk = ttk = None
+
+HEADLESS = os.getenv("HEADLESS", "").strip().lower() in ("1", "true", "yes", "on")
+POPUP_ENABLED = tk is not None and not HEADLESS
 
 
 # 클래스별 위험도 설정
@@ -246,7 +257,9 @@ def trigger_alert(class_name: str, confidence: float,
     except Exception as e:
         print(f"[이메일 알림 실패] {e}")
 
-    # 별도 스레드에서 팝업 표시
+    # 별도 스레드에서 팝업 표시 (헤드리스 모드에서는 생략)
+    if not POPUP_ENABLED:
+        return
     alert = AlertWindow(class_name, confidence, location, frame_path)
     t = threading.Thread(target=alert.show, daemon=True)
     t.start()

@@ -1,0 +1,4 @@
+# 감지기(multi_monitor --headless) Docker 이미지 전용 의존성
+# torch/torchvision 은 Dockerfile.detector 에서 CPU/GPU 인덱스를 골라 먼저 설치함
+# 팝업(tkinter), ChromaDB, 학습/시각화 패키지는 포함하지 않음
+ultralytics>=8.3.0,<9

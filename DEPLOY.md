@@ -1,14 +1,16 @@
-# 원격 서버 Docker 배포 가이드 (웹 대시보드)
+# 원격 서버 Docker 배포 가이드 (웹 대시보드 + 감지기)
 
 배포 관련 파일은 모두 [docker/](docker/) 폴더에 있습니다.
 
 | 파일 | 역할 |
 |---|---|
 | `docker/Dockerfile` | 웹 대시보드 이미지 (빌드 컨텍스트는 프로젝트 루트) |
-| `docker/Dockerfile.dockerignore` | 이미지에서 제외할 파일 (`.env`, 데이터, 모델 등) |
-| `docker/docker-compose.yml` | app + Caddy 구성 |
+| `docker/Dockerfile.detector` | 감지기 이미지 (RTSP → YOLO 추론, 화면 없음, 기본 CPU) |
+| `docker/*.dockerignore` | 이미지에서 제외할 파일 (`.env`, 데이터, 모델 등) |
+| `docker/docker-compose.yml` | app + detector + Caddy 구성 |
 | `docker/Caddyfile` | HTTPS 리버스 프록시 설정 |
 | `docker/.env.example` | 배포용 환경변수 예시 → `docker/.env`로 복사 |
+| `.github/workflows/docker-publish.yml` | main 에 push 하면 두 이미지를 빌드해 GHCR 에 올림 |
 
 ```
 인터넷 ──▶ :80/:443  Caddy (자동 HTTPS, HSTS)
@@ -16,11 +18,18 @@
                        ▼
                      app:8000  FastAPI + SQLite   ← 호스트 포트 미공개
                        │
-                     [volume] app-data → /app/data (db/, captures/)
+RTSP 카메라 ──▶ detector (YOLO, 헤드리스)
+                       │
+                     [volume] app-data → /app/data (db/, captures/)  ← 둘이 같은 볼륨을 공유
 ```
 
-배포 대상은 **웹 대시보드**뿐입니다. 실시간 감지(`src/inference`)는 GPU와 화면(OpenCV 창, tkinter 팝업)이 필요해서 이 이미지에 넣지 않았습니다.
-원격 서버에서는 감지 데이터 없이 빈 대시보드가 뜨는 게 정상입니다.
+감지기는 **카메라와 같은 네트워크에 있는 현장 Linux PC**에서 돌리는 것을 기준으로 합니다.
+감지기와 대시보드는 같은 볼륨의 SQLite 파일로 연결되므로 **반드시 같은 컴퓨터**에서 실행해야 합니다.
+대시보드만 띄우는 서버에서는 감지기를 끄고(`COMPOSE_PROFILES` 비움), 빈 대시보드가 뜨는 게 정상입니다.
+
+컨테이너 안의 감지기는 화면이 없으므로 OpenCV 창과 tkinter 팝업 없이 동작합니다(`HEADLESS=1`).
+감지 → SQLite 기록 → 캡처 저장 → 이메일 알림(`EMAIL_*` 설정 시)까지는 그대로 수행합니다.
+ChromaDB(유사 사례 검색)는 이미지에서 제외했습니다(`VECTOR_DB=off`).
 
 ---
 
@@ -94,6 +103,52 @@ docker compose up -d --build
 docker compose ps            # app 이 (healthy) 인지 확인
 docker compose logs -f app
 ```
+
+### 3-1. 서버에서 빌드하지 않고 GitHub(GHCR) 이미지 받기
+
+`main`에 push하면 GitHub Actions가 두 이미지를 빌드해 올립니다.
+- `ghcr.io/jinkyuhan0111/visionmachine-web`
+- `ghcr.io/jinkyuhan0111/visionmachine-detector`
+
+태그는 `latest`와 `sha-<커밋>`입니다. 진행 상황은 저장소의 **Actions** 탭에서 확인합니다.
+
+```bash
+# 저장소나 패키지가 비공개라면 1회 로그인 (GitHub → Settings → Developer settings →
+# Personal access tokens 에서 read:packages 권한만 있는 토큰 발급)
+echo <토큰> | docker login ghcr.io -u <GitHub 아이디> --password-stdin
+
+cd VisionMachine_Test/docker
+docker compose pull
+docker compose up -d --no-build
+```
+
+업데이트할 때는 로컬에서 push한 뒤 Actions가 끝나면 서버에서 `git pull && docker compose pull && docker compose up -d --no-build`를 실행합니다.
+이전 버전으로 되돌리려면 `.env`의 `IMAGE_TAG=sha-xxxxxxx`로 바꾸고 같은 명령을 실행합니다.
+
+### 3-2. 감지기 켜기 (현장 PC)
+
+```bash
+# 1) 모델 파일 복사 (git 과 이미지에는 포함되지 않음) — 로컬 PC 에서:
+scp fire_detector_best.pt <user>@<현장PC>:~/VisionMachine_Test/models/
+
+# 2) docker/.env 에 추가
+COMPOSE_PROFILES=detector
+CAMERA_SOURCES=rtsp://user:pass@192.168.0.101:554/stream1,rtsp://user:pass@192.168.0.102:554/stream1
+CAMERA_NAMES=카메라1,카메라2
+DETECT_DEVICE=cpu
+
+# 3) 실행 + 로그 확인
+docker compose up -d --no-build
+docker compose logs -f detector     # "[카메라1] 연결 성공" 이 보이면 정상
+```
+
+- 카메라 주소는 명령행 인자가 아닌 환경변수로 넘기므로 `ps`에 비밀번호가 보이지 않습니다. 단, 서버의 root/docker 그룹 사용자는 `docker inspect`로 볼 수 있습니다.
+- `CAMERA_NAMES`는 대시보드에서 회원의 **담당 카메라**를 지정할 때 쓰는 이름입니다.
+- 카메라가 많거나 CPU가 느리면 `FRAME_SKIP`을 늘립니다(예: 5).
+- 현장 PC가 외부 도메인 없이 LAN에서만 대시보드를 쓴다면 `DOMAIN`에 PC의 내부 IP(예: `192.168.0.10`)를 넣습니다. 이때 Caddy가 자체 서명 인증서를 씁니다.
+- **NVIDIA GPU**를 쓰려면 nvidia-container-toolkit을 설치하고 `docker-compose.yml`의 `deploy` 주석을 해제합니다. 이미지는 GPU용으로 직접 빌드합니다:
+  `docker compose build --build-arg TORCH_INDEX=https://download.pytorch.org/whl/cu128 detector`. 그다음 `.env`에 `DETECT_DEVICE=0`을 설정합니다.
+- 이미지는 `linux/amd64`용입니다. Jetson 같은 ARM 장비는 별도 빌드가 필요합니다.
 
 `.env`가 안전하지 않으면 **app 컨테이너가 기동을 거부합니다**(`APP_ENV=production`). 거부 조건은 다음과 같습니다.
 - `SESSION_SECRET_KEY`가 32자 미만이거나 README 예시값임

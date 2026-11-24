@@ -3,6 +3,7 @@ Gmail SMTP 이메일 알림
 화재/연기 감지 시 이메일 발송
 """
 
+import os
 import smtplib
 import threading
 import time
@@ -35,6 +36,18 @@ def setup(sender: str, password: str, recipient: str):
     EMAIL_CONFIG["recipient"] = recipient
     EMAIL_CONFIG["enabled"]   = True
     print(f"[이메일 알림] 설정 완료: {sender} → {recipient}")
+
+
+def _setup_from_env():
+    """EMAIL_SENDER / EMAIL_PASSWORD / EMAIL_RECIPIENT 환경변수가 모두 있으면 자동 활성화"""
+    sender    = os.getenv("EMAIL_SENDER", "").strip()
+    password  = os.getenv("EMAIL_PASSWORD", "").strip()
+    recipient = os.getenv("EMAIL_RECIPIENT", "").strip()
+    if sender and password and recipient:
+        setup(sender, password, recipient)
+
+
+_setup_from_env()
 
 
 def _build_html(class_name: str, confidence: float, location: str, timestamp: str) -> str:

@@ -1,7 +1,13 @@
-# 화재 감지 웹 대시보드 운영 배포
-# 실행:  cd docker && docker compose up -d --build
+# 화재 감지 시스템 운영 배포 (웹 대시보드 + 감지기)
 # 이 폴더의 .env 를 사용함 (cp .env.example .env)
-#   인터넷 ──443/80──▶ caddy (자동 HTTPS) ──내부망──▶ app:8000
+#
+# 실행 방법 (docker/ 에서)
+#   GitHub(GHCR) 이미지 사용:  docker compose pull && docker compose up -d --no-build
+#   이 PC 에서 직접 빌드:      docker compose up -d --build
+#   감지기까지 띄우려면 .env 에 COMPOSE_PROFILES=detector
+#
+#   인터넷 ──443/80──▶ caddy (자동 HTTPS) ──내부망──▶ app:8000 ──┐
+#   RTSP 카메라 ──▶ detector (YOLO, 화면 없음) ──────────────────┴─▶ [volume] app-data (db/, captures/)
 # app 컨테이너는 호스트 포트를 열지 않는다 (외부에서 직접 접근 불가).
 
 services:
@@ -9,7 +15,7 @@ services:
     build:
       context: ..                  # 빌드 컨텍스트 = 프로젝트 루트
       dockerfile: docker/Dockerfile
-    image: visionmachine-web:latest
+    image: ghcr.io/jinkyuhan0111/visionmachine-web:${IMAGE_TAG:-latest}
     env_file: .env
     environment:
       APP_ENV: production
@@ -37,6 +43,52 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  detector:
+    profiles: ["detector"]         # 기본은 꺼짐. .env 의 COMPOSE_PROFILES=detector 로 켬
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.detector
+    image: ghcr.io/jinkyuhan0111/visionmachine-detector:${IMAGE_TAG:-latest}
+    depends_on:
+      app:
+        condition: service_healthy # DB 초기화/마이그레이션은 app 이 먼저 끝냄
+    # env_file 대신 필요한 값만 전달 (세션 키·관리자 비밀번호는 감지기에 주지 않음)
+    environment:
+      CAMERA_SOURCES: ${CAMERA_SOURCES:-}   # 비어 있으면 감지기가 오류를 내고 멈춤
+      CAMERA_NAMES: ${CAMERA_NAMES:-}
+      DETECT_DEVICE: ${DETECT_DEVICE:-cpu}
+      DETECT_CONF: ${DETECT_CONF:-0.25}
+      FRAME_SKIP: ${FRAME_SKIP:-2}
+      EMAIL_SENDER: ${EMAIL_SENDER:-}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+      EMAIL_RECIPIENT: ${EMAIL_RECIPIENT:-}
+    volumes:
+      - app-data:/app/data         # 웹 대시보드와 같은 DB/캡처 폴더
+      - ../models:/app/models:ro   # 프로젝트 루트의 models/fire_detector_best.pt
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 3g
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # NVIDIA GPU 사용 시 (nvidia-container-toolkit 설치 + GPU 용 이미지 빌드 필요):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   caddy:
     image: caddy:2-alpine
